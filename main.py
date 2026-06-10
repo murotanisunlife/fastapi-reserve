@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Optional
 import time
 import os
@@ -279,7 +279,7 @@ def my_reservations(user_id: str, target_date: date):
 @app.get("/availability")
 def get_availability(target_date: date):
     events = fetch_events_for_date(target_date)
-    return build_busy_slots(events)
+    return events
 
 
 # ---------- 予約 ----------
