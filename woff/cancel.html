@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>予約キャンセル</title>
+</head>
+<body>
+
+<h2>予約キャンセル</h2>
+
+イベントID：<input type="text" id="eid"><br><br>
+
+<button onclick="cancel()">キャンセルする</button>
+
+<script>
+const API_BASE = "https://fastapi-reserve.onrender.com";
+
+async function cancel() {
+    const eventId = document.getElementById("eid").value;
+
+    const resp = await fetch(`${API_BASE}/cancel?event_id=${eventId}`, {
+        method: "DELETE"
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+        alert("エラー: " + data.detail);
+        return;
+    }
+
+    alert("キャンセルしました");
+}
+</script>
+
+</body>
+</html>

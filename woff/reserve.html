@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>予約フォーム</title>
+</head>
+<body>
+
+<h2>会議室予約</h2>
+
+日付：<input type="date" id="date"><br><br>
+開始：<input type="time" id="start"><br><br>
+終了：<input type="time" id="end"><br><br>
+名前：<input type="text" id="name"><br><br>
+社員ID：<input type="text" id="uid"><br><br>
+
+<button onclick="reserve()">予約する</button>
+
+<script>
+const API_BASE = "https://fastapi-reserve.onrender.com";
+
+async function reserve() {
+    const payload = {
+        date: document.getElementById("date").value,
+        start_time: document.getElementById("start").value,
+        end_time: document.getElementById("end").value,
+        requester_name: document.getElementById("name").value,
+        requester_id: document.getElementById("uid").value
+    };
+
+    const resp = await fetch(`${API_BASE}/reserve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+        alert("エラー: " + data.detail);
+        return;
+    }
+
+    window.location.href = "complete.html";
+}
+</script>
+
+</body>
+</html>

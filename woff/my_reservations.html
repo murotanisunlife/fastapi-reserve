@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>予約カレンダー</title>
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  #calendar { width: 100%; max-width: 400px; }
+  .header { display: flex; justify-content: space-between; align-items: center; }
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
+  .day { padding: 10px; text-align: center; border: 1px solid #ccc; cursor: pointer; }
+  .day.has-event { background: #ffe4e1; font-weight: bold; }
+  .day.today { background: #e1f5fe; }
+  #list { margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<h2>自分の予約カレンダー</h2>
+
+社員ID：<input type="text" id="uid" placeholder="例: user123"><br><br>
+
+<div id="calendar"></div>
+
+<div id="list"></div>
+
+<script>
+const API_BASE = "https://fastapi-reserve.onrender.com";
+
+let current = new Date();
+
+function renderCalendar() {
+    const uid = document.getElementById("uid").value;
+    if (!uid) {
+        document.getElementById("calendar").innerHTML = "<p>社員IDを入力してください</p>";
+        return;
+    }
+
+    const year = current.getFullYear();
+    const month = current.getMonth(); // 0-11
+
+    const first = new Date(year, month, 1);
+    const last = new Date(year, month + 1, 0);
+
+    const calendar = document.getElementById("calendar");
+    calendar.innerHTML = `
+        <div class="header">
+            <button onclick="prevMonth()">←</button>
+            <h3>${year}年 ${month + 1}月</h3>
+            <button onclick="nextMonth()">→</button>
+        </div>
+        <div class="grid" id="grid"></div>
+    `;
+
+    const grid = document.getElementById("grid");
+
+    // 曜日ヘッダー
+    ["日","月","火","水","木","金","土"].forEach(d => {
+        const div = document.createElement("div");
+        div.textContent = d;
+        div.style.fontWeight = "bold";
+        grid.appendChild(div);
+    });
+
+    // 空白
+    for (let i = 0; i < first.getDay(); i++) {
+        grid.appendChild(document.createElement("div"));
+    }
+
+    // 日付を埋める
+    for (let d = 1; d <= last.getDate(); d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        const div = document.createElement("div");
+        div.className = "day";
+        div.textContent = d;
+
+        // 今日
+        const today = new Date();
+        if (today.toDateString() === new Date(year, month, d).toDateString()) {
+            div.classList.add("today");
+        }
+
+        // クリックで予約一覧表示
+        div.onclick = () => loadReservations(uid, dateStr);
+
+        grid.appendChild(div);
+    }
+
+    // 予約がある日をマーク
+    markEvents(uid, year, month);
+}
+
+async function markEvents(uid, year, month) {
+    const grid = document.getElementById("grid");
+    const days = grid.querySelectorAll(".day");
+
+    for (let d = 1; d <= days.length; d++) {
+        const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+
+        const url = `${API_BASE}/my_reservations?user_id=${uid}&target_date=${dateStr}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+
+        if (data.length > 0) {
+            days[d].classList.add("has-event");
+        }
+    }
+}
+
+async function loadReservations(uid, dateStr) {
+    const url = `${API_BASE}/my_reservations?user_id=${uid}&target_date=${dateStr}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+
+    const box = document.getElementById("list");
+    box.innerHTML = `<h3>${dateStr} の予約</h3>`;
+
+    if (data.length === 0) {
+        box.innerHTML += "<p>予約はありません</p>";
+        return;
+    }
+
+    data.forEach(ev => {
+        box.innerHTML += `
+            <p>
+                <b>${ev.summary}</b><br>
+                ${ev.start} - ${ev.end}<br>
+                ID: ${ev.event_id}
+            </p>
+        `;
+    });
+}
+
+function prevMonth() {
+    current.setMonth(current.getMonth() - 1);
+    renderCalendar();
+}
+
+function nextMonth() {
+    current.setMonth(current.getMonth() + 1);
+    renderCalendar();
+}
+
+// 社員ID入力後に自動でカレンダー表示
+document.getElementById("uid").addEventListener("change", renderCalendar);
+</script>
+
+</body>
+</html>
