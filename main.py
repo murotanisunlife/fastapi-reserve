@@ -122,25 +122,26 @@ def get_access_token():
 
 # ---------- カレンダーから予定取得 ----------
 
-def fetch_events_for_date(target_date: date) -> List[dict]:
-    access_token = get_access_token()
+def fetch_events_for_date(target_date):
+    try:
+        access_token = get_access_token()
+        url = f"{LW_API_BASE}/calendar/v2.0/calendars/{CALENDAR_ID}/events?startDate={target_date}&endDate={target_date}"
+        headers = {"Authorization": f"Bearer {access_token}"}
 
-    start_dt = datetime.combine(target_date, time(0, 0))
-    end_dt = datetime.combine(target_date, time(23, 59))
+        resp = requests.get(url, headers=headers)
 
-    url = f"{API_BASE}/calendar/v1/calendars/{CALENDAR_ID}/events"
-    params = {
-        "start": start_dt.isoformat(),
-        "end": end_dt.isoformat(),
-    }
-    headers = {"Authorization": "Bearer " + access_token}
+        # ここでログを出す
+        print("Calendar API response:", resp.status_code, resp.text)
 
-    resp = requests.get(url, headers=headers, params=params)
+        if resp.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Fetch error: {resp.text}")
 
-    if resp.status_code != 200:
-        raise HTTPException(status_code=500, detail="Fetch error: " + resp.text)
+        data = resp.json()
+        return data.get("events", [])
 
-    return resp.json().get("events", [])
+    except Exception as e:
+        print("fetch_events_for_date ERROR:", e)
+        raise
 
 
 # ---------- 予約済み時間帯を整形 ----------
