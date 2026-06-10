@@ -94,7 +94,7 @@ def get_access_token():
     payload = {
         "iss": SERVICE_ACCOUNT,
         "sub": SERVICE_ACCOUNT,
-        "aud": f"{AUTH_BASE}/oauth2/v2.0/token",
+        "aud": "https://auth.worksmobile.com/oauth2/v2.0/token",
         "iat": now,
         "exp": now + 3600,
         "scope": "calendar"
