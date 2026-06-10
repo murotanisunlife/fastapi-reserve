@@ -87,34 +87,36 @@ class EditRequest(BaseModel):
 
 # ---------- アクセストークン取得 ----------
 
-def get_access_token() -> str:
-    with open(PRIVATE_KEY_PATH, "r") as f:
-        private_key = f.read()
+def get_access_token():
+    now = int(time.time())
 
-    now = int(time_module.time())
     payload = {
-        "iss": CLIENT_ID,
+        "iss": SERVICE_ACCOUNT,
         "sub": SERVICE_ACCOUNT,
+        "aud": f"{AUTH_BASE}/oauth2/v2.0/token",
         "iat": now,
         "exp": now + 3600,
-    }
-
-    assertion = jwt.encode(payload, private_key, algorithm="RS256")
-
-    url = f"{AUTH_BASE}/oauth2/v2.0/token"
-    data = {
-        "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
-        "assertion": assertion,
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
         "scope": "calendar"
     }
 
+    with open(PRIVATE_KEY_PATH, "r") as f:
+        private_key = f.read()
+
+    jwt_token = jwt.encode(payload, private_key, algorithm="RS256")
+
+    data = {
+        "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        "assertion": jwt_token
+    }
+
+    url = f"{AUTH_BASE}/oauth2/v2.0/token"
     resp = requests.post(url, data=data)
+
     if resp.status_code != 200:
-        raise HTTPException(status_code=500, detail="Token error: " + resp.text)
+        raise HTTPException(status_code=500, detail=f"Token error: {resp.text}")
 
     return resp.json()["access_token"]
+
 
 
 # ---------- カレンダーから予定取得 ----------
