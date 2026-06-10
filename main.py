@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 API_BASE = os.getenv("LW_API_BASE")
+AUTH_BASE = os.getenv("LW_AUTH_BASE")
 CLIENT_ID = os.getenv("LW_CLIENT_ID")
 CLIENT_SECRET = os.getenv("LW_CLIENT_SECRET")
 SERVICE_ACCOUNT = os.getenv("LW_SERVICE_ACCOUNT")
@@ -100,7 +101,7 @@ def get_access_token() -> str:
 
     assertion = jwt.encode(payload, private_key, algorithm="RS256")
 
-    url = f"{API_BASE}/oauth2/v2.0/token"
+    url = f"{AUTH_BASE}/oauth2/v2.0/token"
     data = {
         "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
         "assertion": assertion,
